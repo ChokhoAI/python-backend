@@ -1,4 +1,4 @@
-from fastapi import FastAPI , File, UploadFile
+from fastapi import FastAPI , File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
@@ -50,6 +50,9 @@ async def root():
 
 @app.post("/routes" , response_model= RouteOptimzationResponse)
 async def route_optimization(request : RouteOptimizationRequest):
+    if len(request.complaint) < request.total_vehicles:
+        raise HTTPException(status_code=400, detail="Number of complaints must be lower than number of complaints")\
+        
     k = request.total_vehicles
     model = KMeans(n_clusters=k, random_state= 42)
 
