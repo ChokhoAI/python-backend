@@ -10,14 +10,12 @@ import json
 import numpy as np
 from contextlib import asynccontextmanager
 from ultralytics import YOLO
+from model_loader import load_model
 
-model = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global model
-    model = YOLO("best.pt")
-    print("YOLO model loaded successfully")
+    load_model()
     yield
 
 app = FastAPI(lifespan=lifespan)

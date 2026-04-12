@@ -1,10 +1,10 @@
-from main import model
+from model_loader import get_model
 from PIL import Image
 from io import BytesIO
 
 
 async def detect_trash(image_bytes : bytes):
-    global model
+    model = get_model()
     image = Image.open(BytesIO(image_bytes))
     image = image.resize((320, 320))
 
