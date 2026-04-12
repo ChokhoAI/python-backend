@@ -1,17 +1,10 @@
-from ultralytics import YOLO
+from main import model
 from PIL import Image
 from io import BytesIO
 
-model = YOLO("best.pt")
-
-
-@app.on_event("startup")
-async def startup_event():
-    print("Application started successfully")
-    print(f"YOLO model loaded: {model}")
-
 
 async def detect_trash(image_bytes : bytes):
+    global model
     image = Image.open(BytesIO(image_bytes))
     image = image.resize((320, 320))
 

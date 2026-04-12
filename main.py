@@ -8,8 +8,19 @@ from models import AiResponse, VerificationRequest ,VerificationResponse , Route
 import requests
 import json
 import numpy as np
+from contextlib import asynccontextmanager
+from ultralytics import YOLO
 
-app = FastAPI()
+model = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global model
+    model = YOLO("best.pt")
+    print("YOLO model loaded successfully")
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
