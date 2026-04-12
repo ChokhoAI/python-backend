@@ -1,49 +1,15 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from typing import List
 from collections import defaultdict
 from sklearn.cluster import KMeans
 from services.tsp import nearest_neighbor_tsp
-from services.verify_image import verify_image
-
+from services.ai import verify_image , complaint_check
+from models import AiResponse, VerificationRequest ,VerificationResponse , RouteOptimizationRequest , RouteOptimzationResponse , RouteResult
 import requests
 import json
 import numpy as np
 
-
 app = FastAPI()
-
-
-class ComplaintResponse(BaseModel):
-    complaint_id : int
-    user_id : int
-
-
-class ComplaintRequest(BaseModel):
-    id : int
-    latitude : float
-    longitude : float
-
-class RouteOptimizationRequest(BaseModel):
-    complaints : List[ComplaintRequest]
-    total_vehicles : int
-
-class RouteResult(BaseModel):
-    cluster_id : int
-    complaint_ids : List[int] 
-
-class RouteOptimzationResponse(BaseModel):
-    routes : List[RouteResult]
-
-class VerificationResponse(BaseModel):
-    is_cleaned : bool
-    reason : str
-
-class VerificationRequest(BaseModel):
-    original_img_url : str
-    cleaned_img_url : str
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -59,9 +25,10 @@ app.add_middleware(
 async def root():
     return {"message" : "chokho-python-backend is running"}
 
-# @app.post("/detect")
-# async def get_image(complaint_id : int , user_id : int, image : UploadFile = File(...)):
-#     return
+@app.post("/analyze", response_model=AiResponse)
+async def ai_analysis(image : UploadFile = File(...)):
+    file_bytes = await image.read()
+    return await complaint_check(file_bytes)
 
 @app.post("/routes" , response_model= RouteOptimzationResponse)
 async def route_optimization(request : RouteOptimizationRequest):

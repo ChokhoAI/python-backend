@@ -1,8 +1,13 @@
 import psycopg2
 import requests
 import time
+import os
+from dotenv import load_dotenv
 
-conn = psycopg2.connect("dbname=Chokho_AI user=postgres password=postgres")
+
+load_dotenv()
+
+conn = psycopg2.connect(os.getenv("NEON_DB_API_KEY"))
 cur = conn.cursor()
 
 regions = [
