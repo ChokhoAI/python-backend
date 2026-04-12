@@ -22,7 +22,10 @@ app.add_middleware(
     allow_headers = ["*"]
 )
 
-
+@app.on_event("startup")
+async def startup_event():
+    print("Application started successfully")
+    print(f"YOLO model loaded: {model}")
 
 @app.get("/")
 async def root():
@@ -77,3 +80,7 @@ async def verify(requestModel : VerificationRequest):
         is_cleaned= result["is_cleaned"],
         reason= result["reasoning"]
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=10000)
