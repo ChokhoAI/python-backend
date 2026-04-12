@@ -13,7 +13,10 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins = ["*"],
+    allow_origins = ["http://localhost:3000",
+                    "https://chokho-frontend.vercel.app",
+                    "https://chokho-backend.onrender.com"
+                    ],
     allow_credentials = True,
     allow_methods = ["*"],
     allow_headers = ["*"]
