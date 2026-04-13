@@ -1,0 +1,18 @@
+# Ensure these critical files are deployed
+!best.pt
+!model_loader.py
+!requirements.txt
+
+# Ignore unnecessary files
+.git
+.gitignore
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+*.log
+.DS_Store
+.env.local
+test_images/
