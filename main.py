@@ -3,24 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from collections import defaultdict
 from sklearn.cluster import KMeans
 from services.tsp import nearest_neighbor_tsp
-from services.ai import verify_image , complaint_check
 from models import AiResponse, VerificationRequest ,VerificationResponse , RouteOptimizationRequest , RouteOptimzationResponse , RouteResult
 import requests
 import json
 import numpy as np
-import asyncio
-from contextlib import asynccontextmanager
-from ultralytics import YOLO
-from model_loader import load_model
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    loop = asyncio.get_event_loop()
-    await loop.run_in_executor(None, load_model)
-    yield
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,6 +27,7 @@ async def root():
 
 @app.post("/analyze", response_model=AiResponse)
 async def ai_analysis(image : UploadFile = File(...)):
+    from services.ai import complaint_check
     file_bytes = await image.read()
     return await complaint_check(file_bytes)
 
@@ -76,6 +65,7 @@ async def route_optimization(request : RouteOptimizationRequest):
 
 @app.post("/verify", response_model= VerificationResponse)
 async def verify(requestModel : VerificationRequest):
+    from services.ai import verify_image
     original_img = requests.get(requestModel.original_img_url).content
     cleaned_img = requests.get(requestModel.cleaned_img_url).content
 
