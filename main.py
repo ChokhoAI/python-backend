@@ -8,6 +8,7 @@ from models import AiResponse, VerificationRequest ,VerificationResponse , Route
 import requests
 import json
 import numpy as np
+import asyncio
 from contextlib import asynccontextmanager
 from ultralytics import YOLO
 from model_loader import load_model
@@ -15,7 +16,8 @@ from model_loader import load_model
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_model()
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, load_model)
     yield
 
 app = FastAPI(lifespan=lifespan)
@@ -87,4 +89,4 @@ async def verify(requestModel : VerificationRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=10000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
