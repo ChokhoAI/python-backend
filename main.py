@@ -5,13 +5,12 @@ from collections import defaultdict
 from sklearn.cluster import KMeans
 from services.tsp import nearest_neighbor_tsp
 from models import AiResponse, VerificationRequest ,VerificationResponse , RouteOptimizationRequest , RouteOptimzationResponse , RouteResult
-from model_loader import load_model_startup, is_model_ready
 import requests
 import json
 import numpy as np
 import logging
+import asyncio
 
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -28,44 +27,27 @@ app.add_middleware(
     allow_headers = ["*"]
 )
 
-# Startup event: Load model when server starts
-@app.on_event("startup")
-async def startup_event():
-    """Load YOLO model on server startup to avoid request delays."""
-    try:
-        logger.info("Server starting - initializing AI model...")
-        load_model_startup()
-        logger.info("Server ready to handle requests")
-    except Exception as e:
-        logger.error(f"Failed to load model on startup: {e}")
-        # Don't crash server, but log the error
-
 @app.get("/")
 async def root():
     return {"message" : "chokho-python-backend is running"}
 
-@app.get("/health")
-async def health_check():
-    """Health check endpoint that includes model readiness status."""
-    return {
-        "status": "healthy",
-        "model_ready": is_model_ready(),
-        "service": "Chokho AI Backend"
-    }
-
 @app.post("/analyze", response_model=AiResponse)
 async def ai_analysis(image : UploadFile = File(...)):
-    if not is_model_ready():
-        raise HTTPException(status_code=503, detail="AI model is still loading, please retry in a moment")
     
     from services.ai import complaint_check
-    file_bytes = await image.read()
     
     try:
-        result = await complaint_check(file_bytes)
+        file_bytes = await image.read()
+        logger.info(f"Received image upload: {image.filename}, size: {len(file_bytes)} bytes")
+        
+        result = await asyncio.wait_for(complaint_check(file_bytes), timeout=60.0)
+        logger.info(f"Analysis complete: trash_detected={result.trash_detected}")
         return result
+    except asyncio.TimeoutError:
+        logger.error(f"Analysis timeout for image {image.filename}")
+        raise HTTPException(status_code=504, detail="Image processing timeout - request took too long")
     except Exception as e:
-        logger.error(f"Error in analyze endpoint: {e}")
+        logger.error(f"Error in analyze endpoint: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Error processing image")
 
 @app.post("/routes" , response_model= RouteOptimzationResponse)
@@ -122,12 +104,9 @@ async def verify(requestModel : VerificationRequest):
 
 if __name__ == "__main__":
     import uvicorn
-    # Configuration optimized for Render free tier
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=10000,
-        workers=1,  # Single worker for free tier stability
-        timeout_keep_alive=5,
-        timeout_notify=60  # Longer timeout for requests
+        port=8000,
+        workers=1
     )

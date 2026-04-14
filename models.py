@@ -1,14 +1,22 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional, List
 
 class AiResponse(BaseModel):
-    trash_detected: bool
-    is_fake: Optional[bool]
-    is_indoor: Optional[bool]
-    trash_type: Optional[str]
-    volume_estimate: Optional[str]
-    ai_analysis: Optional[str]
-    severity_score: Optional[float]
+    model_config = ConfigDict(
+        alias_generator=lambda field_name: ''.join(
+            word.capitalize() if i > 0 else word
+            for i, word in enumerate(field_name.split('_'))
+        ),
+        populate_by_name=True
+    )
+    
+    trash_detected: bool = False
+    is_fake: bool = False
+    is_indoor: bool = False
+    trash_type: str = "OTHER"
+    volume_estimate: str = "SMALL"
+    ai_analysis: str = "No analysis"
+    severity_score: float = 1.0
 
 class ComplaintResponse(BaseModel):
     complaint_id : int

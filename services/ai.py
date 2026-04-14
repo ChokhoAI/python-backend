@@ -4,6 +4,10 @@ import os , json
 from dotenv import load_dotenv
 from services.detection import detect_trash
 from models import AiResponse
+import asyncio
+import logging
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -40,16 +44,24 @@ async def complaint_check(image_bytes : bytes):
         data=image_bytes, mime_type="image/jpeg"
     )
 
-    model_result = await detect_trash(image_bytes)
+    try:
+        model_result = await asyncio.wait_for(detect_trash(image_bytes), timeout=30.0)
+    except asyncio.TimeoutError:
+        logger.warning("Detection timeout - returning default response")
+        model_result = False
+    except Exception as e:
+        logger.error(f"Detection error: {e}")
+        model_result = False
+    
     if not model_result:
         return AiResponse(
             trash_detected=False,
-            is_fake=None,
-            is_indoor=None,
-            trash_type=None,
-            volume_estimate=None,
-            ai_analysis=None,
-            severity_score=None
+            is_fake=False,
+            is_indoor=False,
+            trash_type="None",
+            volume_estimate="None",
+            ai_analysis="None",
+            severity_score=0.0
         )
 
     prompt = """
@@ -65,6 +77,8 @@ async def complaint_check(image_bytes : bytes):
                     "ai_analysis": "brief description of what you see, confidence level, and any concerns",
                     "severity_score": a number between 1.0 and 10.0
                 }
+
+                Dont put null in anything
 
                 Rules:
                 - trash_detected: true only if there is clearly visible waste/trash in the image
@@ -83,4 +97,15 @@ async def complaint_check(image_bytes : bytes):
 
     text = response.text.strip().replace("```json", "").replace("```", "")
     data = json.loads(text)
-    return AiResponse(**data)
+
+    safe_data = {
+        "trash_detected": bool(data.get("trash_detected", False)),
+        "is_fake": bool(data.get("is_fake", False)),
+        "is_indoor": bool(data.get("is_indoor", False)),
+        "trash_type": data.get("trash_type") or "OTHER",
+        "volume_estimate": data.get("volume_estimate") or "SMALL",
+        "ai_analysis": data.get("ai_analysis") or "Unable to analyze image",
+        "severity_score": float(data.get("severity_score") or 1.0)
+    }
+
+    return AiResponse(**safe_data)
