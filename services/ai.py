@@ -91,7 +91,7 @@ async def complaint_check(image_bytes : bytes):
             """
 
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemma-4-26b-a4b-it",
         contents=[prompt, image]
     )
 
