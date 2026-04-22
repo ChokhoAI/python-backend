@@ -1,6 +1,14 @@
+DEPOT_COORDS = (30.3245, 78.0467)
+
 def nearest_neighbor_tsp(complaints):
     unvisited = complaints.copy()
-    route = [unvisited.pop(0)] 
+    
+    nearest_to_depot = min(unvisited, key=lambda c: 
+        (c['coords'][0] - DEPOT_COORDS[0])**2 + 
+        (c['coords'][1] - DEPOT_COORDS[1])**2
+    )
+    unvisited.remove(nearest_to_depot)
+    route = [nearest_to_depot]
     
     while unvisited:
         current = route[-1]
