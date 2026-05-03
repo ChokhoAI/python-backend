@@ -22,7 +22,7 @@ async def verify_image(original_img , cleaned_img):
     )
 
     response = client.models.generate_content(
-        model="gemini-3-flash-preview",
+        model="gemma-4-26b-a4b-it",
         contents=[
             """You are a waste verification assistant. You will be given two images:
             1. Original complaint photo showing trash at a location 
