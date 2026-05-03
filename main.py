@@ -89,7 +89,7 @@ async def verify(requestModel : VerificationRequest):
         original_img = requests.get(requestModel.original_img_url, timeout=10).content
         cleaned_img = requests.get(requestModel.cleaned_img_url, timeout=10).content
 
-        response = verify_image(original_img,cleaned_img)
+        response = await verify_image(original_img,cleaned_img)
         result = json.loads(response)
 
         return VerificationResponse(
